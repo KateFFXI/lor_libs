@@ -9,11 +9,14 @@ lor_position._author = 'Ragnarok.Lorand'
 lor_position._version = '2018.05.20.0'
 
 require('lor/lor_utils')
+packets = require('packets')
 _libs.lor.req('ffxi')
 _libs.lor.position = lor_position
 
 local quadrants = {NW = {-1, 1}, SW = {1, -1}, NE = {0, -1}, SE = {0, 1} }
 local ffxi = _libs.lor.ffxi
+
+local posX, posY, posZ
 
 
 function lor_position.new(...)
@@ -41,10 +44,9 @@ function lor_position.of(targ)
 end
 
 function lor_position.current_position()
-    local mob = windower.ffxi.get_mob_by_target('me')
-    if mob ~= nil then
-        return lor_position.new(mob.x, mob.y, mob.z)
-    end
+	if posX and posY and posZ then
+		return lor_position.new(posX, posY, posZ)
+	end
     return nil
 end
 
@@ -103,6 +105,15 @@ function lor_position:getDirRadian(other)
 	local phi = (math.pi * quadrants[quad][1]) + (theta * quadrants[quad][2])
 	return phi
 end
+
+windower.register_event('outgoing chunk', function(id, data)
+	if id == 0x015 then
+		local packet = packets.parse('outgoing', data)
+		posX = packet.X
+		posY = packet.Y
+		posZ = packet.Z
+	end
+end)
 
 
 return lor_position
