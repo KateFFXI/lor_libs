@@ -315,6 +315,10 @@ function Actor:can_use(action)
     return false
 end
 
+local multi_use_abilities = {
+    [195] = {charges = 2, max_charges = 2, refresh_interval = 50, last_checked = 0}, -- Quick Draw - Max again.
+	[231] = {charges = 3, max_charges = 3, refresh_interval = 80, last_checked = 0} -- /SCH Assume max subjob charges.  Main job not taken to account.
+}
 
 function Actor:ready_to_use(action)
     --[[
@@ -332,8 +336,38 @@ function Actor:ready_to_use(action)
 			local tp_cost = (player.vitals.tp >= action.tp_cost)
 			return (rc == 0 and tp_cost == true)
         elseif S{'/jobability', '/pet'}:contains(action.prefix) then
-            local rc = windower.ffxi.get_ability_recasts()[action.recast_id]
-            return rc == 0
+			if multi_use_abilities[action.recast_id] then
+                -- Custom handling for multi-use abilities
+                local ability = multi_use_abilities[action.recast_id]
+                local rc = windower.ffxi.get_ability_recasts()[action.recast_id]
+                local current_time = os.time()
+
+                -- Refresh charges based on recast availability or refresh interval
+                if rc == 0 then
+                    -- Recast is ready, reset charges
+                    ability.charges = ability.max_charges
+                elseif current_time - ability.last_checked >= ability.refresh_interval then
+                    -- Increment charges if the refresh interval has passed
+                    if ability.charges < ability.max_charges then
+                        ability.charges = ability.charges + 1
+                        ability.last_checked = current_time -- Update last checked time
+                    end
+                end
+
+                -- Check if ability can be used
+                if ability.charges > 0 then
+                    ability.charges = ability.charges - 1
+                    return true
+                else
+                    return false
+                end
+            else
+                -- Standard JA handling
+                local rc = windower.ffxi.get_ability_recasts()[action.recast_id]
+                return rc == 0
+            end
+            -- local rc = windower.ffxi.get_ability_recasts()[action.recast_id]
+            -- return rc == 0
         elseif action.prefix == '/weaponskill' then
             return (player.status == 1) and (player.vitals.tp > 999)
         end
