@@ -317,7 +317,7 @@ end
 
 local multi_use_abilities = {
     [195] = {charges = 2, max_charges = 2, refresh_interval = 50, last_checked = 0}, -- Quick Draw - Max again.
-	[231] = {charges = 3, max_charges = 3, refresh_interval = 80, last_checked = 0} -- /SCH Assume max subjob charges.  Main job not taken to account.
+	[231] = {charges = 3, max_charges = 3, refresh_interval = 80, last_checked = 0}, -- /SCH Assume max subjob charges.  Main job not taken to account.
 }
 
 function Actor:ready_to_use(action)
@@ -346,6 +346,7 @@ function Actor:ready_to_use(action)
                 if rc == 0 then
                     -- Recast is ready, reset charges
                     ability.charges = ability.max_charges
+					ability.last_checked = current_time
                 elseif current_time - ability.last_checked >= ability.refresh_interval then
                     -- Increment charges if the refresh interval has passed
                     if ability.charges < ability.max_charges then
