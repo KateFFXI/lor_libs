@@ -315,7 +315,48 @@ function Actor:can_use(action)
     return false
 end
 
+function get_current_stratagem_count()
+    -- returns recast in seconds.
+    local allRecasts = windower.ffxi.get_ability_recasts()
+    local stratsRecast = allRecasts[231]
+	local StratagemChargeTimer = 240
+	local maxStratagems = 1
+	local player = windower.ffxi.get_player()
 
+	if player.sub_job == 'SCH' then
+		if player.sub_job_level > 49 then
+			StratagemChargeTimer = 80
+		elseif player.sub_job_level > 29 then
+			StratagemChargeTimer = 120
+		end
+	elseif player.main_job_level > 89 then
+		if player.job_points[(res.jobs[player.main_job_id].ens):lower()].jp_spent > 549 then
+			StratagemChargeTimer = 33
+		else
+			StratagemChargeTimer = 48
+		end
+	elseif player.main_job_level > 69 then
+		StratagemChargeTimer = 60
+	elseif player.main_job_level > 49 then
+		StratagemChargeTimer = 80
+	elseif player.main_job_level > 29 then
+		StratagemChargeTimer = 120
+	end
+	
+	if player.sub_job == 'SCH' then
+		if player.sub_job_level > 49 then
+			maxStratagems = 3
+		elseif player.sub_job_level > 29 then
+			maxStratagems = 2
+		end
+	else
+		maxStratagems = math.floor((player.main_job_level + 10) / 20)
+	end
+
+
+    local currentCharges = math.floor(maxStratagems - (stratsRecast / StratagemChargeTimer))
+    return currentCharges
+end
 
 function get_current_quick_draw_charges()
     local quickDrawRecast = windower.ffxi.get_ability_recasts()[195]
@@ -350,13 +391,18 @@ function Actor:ready_to_use(action)
 				else
 					return false -- No charges available
 				end
+			elseif action and action.recast_id == 231 then -- Strats
+				local gems = get_current_stratagem_count()
+				if gems > 0 then
+					return true -- Ability can be used
+				else
+					return false -- No charges available
+				end
             else
                 -- Standard JA handling
                 local rc = windower.ffxi.get_ability_recasts()[action.recast_id]
                 return rc == 0
             end
-            -- local rc = windower.ffxi.get_ability_recasts()[action.recast_id]
-            -- return rc == 0
         elseif action.prefix == '/weaponskill' then
             return (player.status == 1) and (player.vitals.tp > 999)
         end
