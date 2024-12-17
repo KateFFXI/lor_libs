@@ -153,16 +153,6 @@ function Actor:is_moving()
     return moving
 end
 
-
--- function Actor:dist_from(targ)
-    -- -- Returns the distance from the target in in-game units, or -1 if the target could not be determined
-    -- local target = ffxi.get_target(targ)
-    -- if target ~= nil then
-        -- return math.sqrt(target.distance)
-    -- end
-    -- return -1
--- end
-
 function Actor:dist_from(targ)
 	local p = ffxi.get_target('me')
 	local p_2 = ffxi.get_target(targ)
